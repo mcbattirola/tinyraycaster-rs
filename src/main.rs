@@ -4,6 +4,27 @@ fn main() {
 
     let mut frame_buffer = [255; IMAGE_WIDTH * IMAGE_HEIGHT];
 
+    let map_w = 16;
+    let map_h = 16;
+    let map = "0000222222220000\
+1              0\
+1      11111   0\
+1     0        0\
+0     0  1110000\
+0     3        0\
+0   10000      0\
+0   0   11100  0\
+0   0   0      0\
+0   0   1  00000\
+0       1      0\
+2       1      0\
+0       0      0\
+0 0000000      0\
+0              0\
+0002222222200000"
+        .as_bytes();
+
+    // generate image
     for j in 0..IMAGE_HEIGHT {
         for i in 0..IMAGE_WIDTH {
             let c = ColorChannel {
@@ -17,13 +38,48 @@ fn main() {
         }
     }
 
+    // generate map
+    let rect_w = IMAGE_WIDTH / map_w;
+    let rect_h = IMAGE_HEIGHT / map_h;
+    for j in 0..map_h {
+        for i in 0..map_w {
+            // ignore whitespaces
+            if map[i + j * map_w] == 32u8 {
+                continue;
+            };
+
+            let rect_x = i * rect_w;
+            let rect_y = j * rect_h;
+            let c = ColorChannel {
+                red: 0,
+                green: 255,
+                blue: 255,
+                alpha: 0,
+            };
+
+            draw_rectangle(
+                &mut frame_buffer,
+                IMAGE_WIDTH,
+                IMAGE_HEIGHT,
+                rect_x,
+                rect_y,
+                rect_w,
+                rect_h,
+                pack_color(c),
+            );
+        }
+    }
+
     drop_ppm_image(
         "./out.ppm",
         &frame_buffer,
         IMAGE_WIDTH as i32,
         IMAGE_HEIGHT as i32,
-    ).unwrap();
+    )
+    .unwrap();
 }
+
+// image
 
 struct ColorChannel {
     red: u8,
@@ -41,10 +97,10 @@ fn pack_color(c: ColorChannel) -> i32 {
 
 fn unpack_color(color: i32) -> ColorChannel {
     return ColorChannel {
-        red: (((color >> 0)) & 255) as u8,
-        green: (((color >> 8)) & 255) as u8,
-        blue: (((color >> 16)) & 255) as u8,
-        alpha: (((color >> 24)) & 255) as u8,
+        red: ((color >> 0) & 255) as u8,
+        green: ((color >> 8) & 255) as u8,
+        blue: ((color >> 16) & 255) as u8,
+        alpha: ((color >> 24) & 255) as u8,
     };
 }
 
@@ -63,4 +119,25 @@ fn drop_ppm_image(filename: &str, image: &[i32], width: i32, height: i32) -> std
     }
 
     return Ok({});
+}
+
+// map
+
+fn draw_rectangle(
+    image: &mut [i32],
+    img_w: usize,
+    img_h: usize,
+    x: usize,
+    y: usize,
+    w: usize,
+    h: usize,
+    color: i32,
+) {
+    for i in 0..w {
+        for j in 0..h {
+            let cx = x + i;
+            let cy = y + j;
+            image[cx + cy * img_w] = color;
+        }
+    }
 }
