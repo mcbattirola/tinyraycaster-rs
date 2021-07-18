@@ -24,7 +24,11 @@ fn main() {
 0002222222200000"
         .as_bytes();
 
-    let player = Player { x: 3.456, y: 2.345 };
+    let player = Player {
+        x: 3.456,
+        y: 2.345,
+        view_angle: 1.523,
+    };
 
     // generate image
     for j in 0..IMAGE_HEIGHT {
@@ -90,6 +94,27 @@ fn main() {
         5,
         pack_color(player_color),
     );
+
+    // cast ray from player
+    for i in 0..400 {
+        let t = i as f32 * 0.05;
+        let cx = player.x + t * player.view_angle.cos();
+        let cy = player.y + t * player.view_angle.sin();
+
+        if map[cx as usize + cy as usize * map_w] != 32u8 {
+            break;
+        }
+
+        let pix_x: usize = (cx * rect_w as f32) as usize;
+        let pix_y: usize = (cy * rect_h as f32) as usize;
+
+        frame_buffer[pix_x + (pix_y * IMAGE_WIDTH)] = pack_color(ColorChannel {
+            red: 255,
+            green: 255,
+            blue: 255,
+            alpha: 0,
+        })
+    }
 
     drop_ppm_image(
         "./out.ppm",
@@ -168,4 +193,5 @@ fn draw_rectangle(
 struct Player {
     x: f32,
     y: f32,
+    view_angle: f32,
 }
