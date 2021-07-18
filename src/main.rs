@@ -28,6 +28,7 @@ fn main() {
         x: 3.456,
         y: 2.345,
         view_angle: 1.523,
+        fov: std::f64::consts::PI / 3 as f64,
     };
 
     // generate image
@@ -95,25 +96,29 @@ fn main() {
         pack_color(player_color),
     );
 
-    // cast ray from player
-    for i in 0..400 {
-        let t = i as f32 * 0.05;
-        let cx = player.x + t * player.view_angle.cos();
-        let cy = player.y + t * player.view_angle.sin();
+    // draw visibility cone
+    for j in 0..IMAGE_WIDTH {
+        let angle = player.view_angle as f64 - (player.fov / 2.0)
+            + player.fov as f64 * j as f64 / IMAGE_WIDTH as f64;
+        for i in 0..400 {
+            let t = i as f64 * 0.05;
+            let cx = player.x as f64 + t * angle.cos();
+            let cy = player.y as f64 + t * angle.sin();
 
-        if map[cx as usize + cy as usize * map_w] != 32u8 {
-            break;
+            if map[cx as usize + cy as usize * map_w] != 32u8 {
+                break;
+            }
+
+            let pix_x: usize = (cx * rect_w as f64) as usize;
+            let pix_y: usize = (cy * rect_h as f64) as usize;
+
+            frame_buffer[pix_x + (pix_y * IMAGE_WIDTH)] = pack_color(ColorChannel {
+                red: 255,
+                green: 255,
+                blue: 255,
+                alpha: 0,
+            })
         }
-
-        let pix_x: usize = (cx * rect_w as f32) as usize;
-        let pix_y: usize = (cy * rect_h as f32) as usize;
-
-        frame_buffer[pix_x + (pix_y * IMAGE_WIDTH)] = pack_color(ColorChannel {
-            red: 255,
-            green: 255,
-            blue: 255,
-            alpha: 0,
-        })
     }
 
     drop_ppm_image(
@@ -194,4 +199,5 @@ struct Player {
     x: f32,
     y: f32,
     view_angle: f32,
+    fov: f64,
 }
