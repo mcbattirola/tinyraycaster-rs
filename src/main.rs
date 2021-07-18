@@ -29,129 +29,141 @@ fn main() {
 0002222222200000"
         .as_bytes();
 
-    let player = Player {
+    let mut player = Player {
         x: 3.456,
         y: 2.345,
         view_angle: 1.523,
         fov: std::f64::consts::PI / 3 as f64,
     };
 
-    // // generate image
-    // for j in 0..IMAGE_HEIGHT {
-    //     for i in 0..IMAGE_WIDTH {
-    //         let c = ColorChannel {
-    //             red: (255 * j / IMAGE_HEIGHT) as u8,
-    //             green: (255 * i / IMAGE_HEIGHT) as u8,
-    //             blue: 0,
-    //             alpha: 0,
-    //         };
-
-    //         frame_buffer[i + j * IMAGE_WIDTH] = pack_color(c);
-    //     }
-    // }
+    // colors
+    let colors = [
+        pack_color(ColorChannel {
+            red: 0,
+            green: 48,
+            blue: 73,
+            alpha: 0,
+        }),
+        pack_color(ColorChannel {
+            red: 214,
+            green: 40,
+            blue: 40,
+            alpha: 0,
+        }),
+        pack_color(ColorChannel {
+            red: 247,
+            green: 127,
+            blue: 0,
+            alpha: 0,
+        }),
+        pack_color(ColorChannel {
+            red: 252,
+            green: 191,
+            blue: 73,
+            alpha: 0,
+        }),
+    ];
 
     // generate map
     let rect_w = IMAGE_WIDTH / (map_w * 2);
     let rect_h = IMAGE_HEIGHT / map_h;
-    for j in 0..map_h {
-        for i in 0..map_w {
-            // ignore whitespaces
-            if map[i + j * map_w] == 32u8 {
-                continue;
-            };
 
-            let rect_x = i * rect_w;
-            let rect_y = j * rect_h;
-            let c = ColorChannel {
-                red: 0,
-                green: 255,
-                blue: 255,
-                alpha: 0,
-            };
+    for frame in 0..360 {
+        player.view_angle += 2.0 * std::f64::consts::PI / 360.0;
 
-            draw_rectangle(
-                &mut frame_buffer,
-                IMAGE_WIDTH,
-                IMAGE_HEIGHT,
-                rect_x,
-                rect_y,
-                rect_w,
-                rect_h,
-                pack_color(c),
-            );
-        }
-    }
+        // clear screen
+        frame_buffer = [pack_color(ColorChannel {
+            red: 255,
+            green: 255,
+            blue: 255,
+            alpha: 0,
+        }); IMAGE_WIDTH * IMAGE_HEIGHT];
 
-    // draw player
-    let player_color = ColorChannel {
-        red: 255,
-        green: 255,
-        blue: 255,
-        alpha: 0,
-    };
+        for j in 0..map_h {
+            for i in 0..map_w {
+                // ignore whitespaces
+                if map[i + j * map_w] == 32u8 {
+                    continue;
+                };
 
-    draw_rectangle(
-        &mut frame_buffer,
-        IMAGE_WIDTH,
-        IMAGE_HEIGHT,
-        (player.x * (rect_w as f32)) as usize,
-        (player.y * (rect_h as f32)) as usize,
-        5,
-        5,
-        pack_color(player_color),
-    );
-
-    // draw visibility cone and the 3D view
-    for j in 0..IMAGE_WIDTH / 2 {
-        let angle = player.view_angle as f64 - (player.fov / 2.0)
-            + player.fov as f64 * j as f64 / (IMAGE_WIDTH / 2) as f64;
-        for i in 0..400 {
-            let t = i as f64 * 0.05;
-            let cx = player.x as f64 + t * angle.cos();
-            let cy = player.y as f64 + t * angle.sin();
-
-            let pix_x: usize = (cx * rect_w as f64) as usize;
-            let pix_y: usize = (cy * rect_h as f64) as usize;
-
-            // draws the visibility cone
-            frame_buffer[pix_x + (pix_y * IMAGE_WIDTH)] = pack_color(ColorChannel {
-                red: 160,
-                green: 160,
-                blue: 160,
-                alpha: 0,
-            });
-
-            // if the ray touches a wall, draw a vertical column
-            if map[cx as usize + cy as usize * map_w] != 32u8 {
-                let col_height = IMAGE_HEIGHT as f64 / t;
-                let col_color = ColorChannel {
+                let rect_x = i * rect_w;
+                let rect_y = j * rect_h;
+                let c = ColorChannel {
                     red: 0,
                     green: 255,
                     blue: 255,
                     alpha: 0,
                 };
+
+                let color_index = ((map[i + j * map_w] - 0u8) as char).to_digit(10).unwrap();
+
+                // print!("color index: {}\n", color_index);
+
                 draw_rectangle(
                     &mut frame_buffer,
                     IMAGE_WIDTH,
                     IMAGE_HEIGHT,
-                    IMAGE_WIDTH / 2 + j,
-                    (IMAGE_HEIGHT as f64 / 2.0 - col_height / 2.0) as usize,
-                    1,
-                    col_height as usize,
-                    pack_color(col_color),
+                    rect_x,
+                    rect_y,
+                    rect_w,
+                    rect_h,
+                    colors[color_index as usize],
                 );
-                break;
             }
         }
-    }
 
-    drop_ppm_image(
-        "./out.ppm",
-        &frame_buffer,
-        IMAGE_WIDTH as i32,
-        IMAGE_HEIGHT as i32,
-    )
-    .unwrap();
+        // draw visibility cone and the 3D view
+        for j in 0..IMAGE_WIDTH / 2 {
+            let angle = player.view_angle as f64 - (player.fov / 2.0)
+                + player.fov as f64 * j as f64 / (IMAGE_WIDTH / 2) as f64;
+            for i in 0..2000 {
+                let t = i as f64 * 0.01;
+                let cx = player.x as f64 + t * angle.cos();
+                let cy = player.y as f64 + t * angle.sin();
+
+                let pix_x: usize = (cx * rect_w as f64) as usize;
+                let pix_y: usize = (cy * rect_h as f64) as usize;
+
+                // draws the visibility cone
+                frame_buffer[pix_x + (pix_y * IMAGE_WIDTH)] = pack_color(ColorChannel {
+                    red: 160,
+                    green: 160,
+                    blue: 160,
+                    alpha: 0,
+                });
+
+                // if the ray touches a wall, draw a vertical column
+                if map[cx as usize + cy as usize * map_w] != 32u8 {
+                    let col_height = IMAGE_HEIGHT as f64 / t;
+                    let color_index = ((map[cx as usize + cy as usize * map_w] - 0u8) as char)
+                        .to_digit(10)
+                        .unwrap();
+
+                    draw_rectangle(
+                        &mut frame_buffer,
+                        IMAGE_WIDTH,
+                        IMAGE_HEIGHT,
+                        IMAGE_WIDTH / 2 + j,
+                        (IMAGE_HEIGHT as f64 / 2.0 - col_height / 2.0) as usize,
+                        1,
+                        col_height as usize,
+                        colors[color_index as usize],
+                    );
+                    break;
+                }
+            }
+        }
+
+        let filename = format!("{:0>3}.ppm", frame);
+
+        drop_ppm_image(
+            &filename,
+            &frame_buffer,
+            IMAGE_WIDTH as i32,
+            IMAGE_HEIGHT as i32,
+        )
+        .unwrap();
+    }
 }
 
 // image
@@ -227,6 +239,6 @@ fn draw_rectangle(
 struct Player {
     x: f32,
     y: f32,
-    view_angle: f32,
+    view_angle: f64,
     fov: f64,
 }
