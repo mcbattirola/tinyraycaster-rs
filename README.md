@@ -8,4 +8,4 @@ Currently on step 9/17
 
 ## Preview
 
-![](../raycast.gif)
+![](https://github.com/mcbattirola/tinyraycaster-rs/blob/documentation/raycast.gif?raw=true)
