@@ -134,7 +134,7 @@ fn main() {
 
                 // if the ray touches a wall, draw a vertical column
                 if map[cx as usize + cy as usize * map_w] != 32u8 {
-                    let col_height = IMAGE_HEIGHT as f64 / t;
+                    let col_height = IMAGE_HEIGHT as f64 / (t * (angle - player.view_angle).cos());
                     let color_index = ((map[cx as usize + cy as usize * map_w] - 0u8) as char)
                         .to_digit(10)
                         .unwrap();
