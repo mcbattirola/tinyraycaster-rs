@@ -8,7 +8,7 @@ fn main() {
     let map_h = 16;
     let map = "0000222222220000\
 1              0\
-1      11111   0\
+1      1111111 0\
 1     0        0\
 0     0  1110000\
 0     3        0\
@@ -23,6 +23,8 @@ fn main() {
 0              0\
 0002222222200000"
         .as_bytes();
+
+    let player = Player { x: 3.456, y: 2.345 };
 
     // generate image
     for j in 0..IMAGE_HEIGHT {
@@ -69,6 +71,25 @@ fn main() {
             );
         }
     }
+
+    // draw player
+    let player_color = ColorChannel {
+        red: 255,
+        green: 255,
+        blue: 255,
+        alpha: 0,
+    };
+
+    draw_rectangle(
+        &mut frame_buffer,
+        IMAGE_WIDTH,
+        IMAGE_HEIGHT,
+        (player.x * (rect_w as f32)) as usize,
+        (player.y * (rect_h as f32)) as usize,
+        5,
+        5,
+        pack_color(player_color),
+    );
 
     drop_ppm_image(
         "./out.ppm",
@@ -140,4 +161,11 @@ fn draw_rectangle(
             image[cx + cy * img_w] = color;
         }
     }
+}
+
+// player
+
+struct Player {
+    x: f32,
+    y: f32,
 }
